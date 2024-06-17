@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "869619163919",
+    "project_id": "hospitalbedmanager-c06bb",
+    "storage_bucket": "hospitalbedmanager-c06bb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:869619163919:android:667856b4adf5833cdd947a",
+        "android_client_info": {
+          "package_name": "com.example.hospitalbedmanager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkLl4nDZ8iRWsTQsrVJXlsWCaDSvBiU_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
