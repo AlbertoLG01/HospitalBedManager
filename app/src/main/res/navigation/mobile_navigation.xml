@@ -3,23 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_home">
+    app:startDestination="@+id/nav_doctor">
 
     <fragment
-        android:id="@+id/nav_home"
-        android:name="com.example.hospitalbedmanager.ui.home.HomeFragment"
-        android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
+        android:id="@+id/nav_doctor"
+        android:name="com.example.hospitalbedmanager.ui.doctor.DoctorFragment"
+        android:label="@string/menu_doctor"
+        tools:layout="@layout/fragment_doctor" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.example.hospitalbedmanager.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        android:id="@+id/nav_nurse"
+        android:name="com.example.hospitalbedmanager.ui.nurse.NurseFragment"
+        android:label="@string/menu_nurse"
+        tools:layout="@layout/fragment_nurse" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.example.hospitalbedmanager.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        android:id="@+id/nav_porter"
+        android:name="com.example.hospitalbedmanager.ui.porter.PorterFragment"
+        android:label="@string/menu_porter"
+        tools:layout="@layout/fragment_porter" />
 </navigation>
