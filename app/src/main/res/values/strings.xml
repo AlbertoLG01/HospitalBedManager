@@ -21,4 +21,6 @@
     <string name="login_failed">"Login failed"</string>
     <string name="title_activity_register">Registrarse</string>
     <string name="camas_libres">Camas Libres</string>
+    <string name="camas_ocupadas">Camas Ocupadas</string>
+    <string name="desasignar_cama">¿Está seguro de que desea desasignar esta cama?</string>
 </resources>

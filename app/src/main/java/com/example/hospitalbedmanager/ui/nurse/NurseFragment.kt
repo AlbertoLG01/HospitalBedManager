@@ -19,7 +19,6 @@ import com.example.hospitalbedmanager.dataclasses.Bed
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 class NurseFragment : Fragment() {
@@ -27,7 +26,7 @@ class NurseFragment : Fragment() {
     private var _binding: FragmentNurseBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var bedAdapter: BedAdapter
+    private lateinit var freeBedAdapter: FreeBedAdapter
     private val bedList = mutableListOf<Bed>()
     private val db = FirebaseFirestore.getInstance()
 
@@ -46,12 +45,12 @@ class NurseFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        bedAdapter = BedAdapter(requireContext(), bedList) { bed ->
+        freeBedAdapter = FreeBedAdapter(requireContext(), bedList) { bed ->
             showAssignDialog(bed)
         }
         binding.recyclerViewCamas.apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = bedAdapter
+            adapter = freeBedAdapter
         }
     }
 
@@ -64,7 +63,7 @@ class NurseFragment : Fragment() {
                     val bed = document.toObject(Bed::class.java)
                     bedList.add(bed)
                 }
-                bedAdapter.notifyDataSetChanged()
+                freeBedAdapter.notifyDataSetChanged()
             }
             .addOnFailureListener { exception ->
                 Toast.makeText(context, "Error al obtener camas: ${exception.message}", Toast.LENGTH_SHORT).show()
@@ -119,7 +118,7 @@ class NurseFragment : Fragment() {
                     Toast.makeText(context, "Cama asignada exitosamente", Toast.LENGTH_SHORT).show()
                     // Elimina la cama de la lista local
                     bedList.removeIf { it.number == bedNumber }
-                    bedAdapter.notifyDataSetChanged()
+                    freeBedAdapter.notifyDataSetChanged()
                 }.addOnFailureListener { exception ->
                     Toast.makeText(context, "Error al asignar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -135,18 +134,18 @@ class NurseFragment : Fragment() {
         _binding = null
     }
 
-    class BedAdapter(
+    class FreeBedAdapter(
         private val context: Context,
         private val bedList: List<Bed>,
         private val onAssignClickListener: (Bed) -> Unit
-    ) : RecyclerView.Adapter<BedAdapter.BedViewHolder>() {
+    ) : RecyclerView.Adapter<FreeBedAdapter.FreeBedViewHolder>() {
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BedViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FreeBedViewHolder {
             val view = LayoutInflater.from(context).inflate(R.layout.item_free_bed, parent, false)
-            return BedViewHolder(view)
+            return FreeBedViewHolder(view)
         }
 
-        override fun onBindViewHolder(holder: BedViewHolder, position: Int) {
+        override fun onBindViewHolder(holder: FreeBedViewHolder, position: Int) {
             val bed = bedList[position]
             holder.bedNumber.text = "Cama número ${bed.number}"
             // Formatear la fecha de asignación
@@ -173,7 +172,7 @@ class NurseFragment : Fragment() {
             return bedList.size
         }
 
-        class BedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        class FreeBedViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val bedNumber: TextView = itemView.findViewById(R.id.text_bed_number)
             val lastAssignment: TextView = itemView.findViewById(R.id.text_last_assignment)
             val consultationNumber: TextView = itemView.findViewById(R.id.text_consultation_number)

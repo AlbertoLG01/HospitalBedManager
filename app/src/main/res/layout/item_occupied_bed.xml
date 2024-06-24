@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/icon_bed"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_cama" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/text_bed_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Número de cama"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/text_last_assignment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fecha de asignación"
+                android:textSize="16sp"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/text_consultation_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Número de consulta"
+                android:textSize="16sp"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/text_patient_associated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Paciente Asignado"
+                android:textSize="16sp"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/button_unassign"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Liberar"
+                android:layout_marginTop="16dp" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
