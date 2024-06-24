@@ -53,6 +53,7 @@ class PorterFragment : Fragment() {
     }
 
     private fun fetchBeds() {
+        bedList.clear()
         db.collection("beds")
             .whereEqualTo("isOccupied", true)
             .get()

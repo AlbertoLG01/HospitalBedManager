@@ -6,6 +6,6 @@ data class Bed(
     val number: Int = -1,
     val patientAssociated: String = "",
     val consultationAssociated: Int = -1,
-    val isOccupied: Boolean = false,
+    var isOccupied: Boolean = false,
     val assignmentDate: Timestamp = Timestamp.now()
 )

@@ -23,4 +23,6 @@
     <string name="camas_libres">Camas Libres</string>
     <string name="camas_ocupadas">Camas Ocupadas</string>
     <string name="desasignar_cama">¿Está seguro de que desea desasignar esta cama?</string>
+    <string name="camas_totales">Camas Totales</string>
+    <string name="delete_cama">¿Estás seguro de que deseas eliminar esta cama?</string>
 </resources>
