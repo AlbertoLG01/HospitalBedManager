@@ -3,6 +3,8 @@ package com.example.hospitalbedmanager.ui.nurse
 import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,7 +22,6 @@ import com.example.hospitalbedmanager.dataclasses.Bed
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.firebase.firestore.Transaction
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -32,6 +33,8 @@ class NurseFragment : Fragment() {
     private lateinit var freeBedAdapter: FreeBedAdapter
     private val bedList = mutableListOf<Bed>()
     private val db = FirebaseFirestore.getInstance()
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var fetchBedsRunnable: Runnable
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,7 +49,7 @@ class NurseFragment : Fragment() {
         activity.hideFab()
 
         setupRecyclerView()
-        fetchBeds()
+        startFetchingBeds()
 
         return root
     }
@@ -79,6 +82,20 @@ class NurseFragment : Fragment() {
             }
     }
 
+    private fun startFetchingBeds() {
+        fetchBedsRunnable = object : Runnable {
+            override fun run() {
+                fetchBeds()
+                handler.postDelayed(this, 2000) // 2000 ms = 2 segundos
+            }
+        }
+        handler.post(fetchBedsRunnable)
+    }
+
+    private fun stopFetchingBeds() {
+        handler.removeCallbacks(fetchBedsRunnable)
+    }
+
     private fun showAssignDialog(bed: Bed) {
         val builder = AlertDialog.Builder(requireContext())
         val dialogView = layoutInflater.inflate(R.layout.dialog_assign_bed, null)
@@ -86,7 +103,7 @@ class NurseFragment : Fragment() {
         val editTextConsultationNumber = dialogView.findViewById<EditText>(R.id.editTextConsultationNumber)
 
         builder.setView(dialogView)
-            .setTitle("Asignar Cama")
+            .setTitle("Asignar Cama número ${bed.number}")
             .setPositiveButton("Asignar") { _, _ ->
                 val patientName = editTextPatientId.text.toString()
                 val consultationNumber = editTextConsultationNumber.text.toString().toInt()
@@ -151,6 +168,7 @@ class NurseFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        stopFetchingBeds()
         _binding = null
     }
 

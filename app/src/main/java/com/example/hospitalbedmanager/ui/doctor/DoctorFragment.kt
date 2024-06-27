@@ -3,10 +3,11 @@ package com.example.hospitalbedmanager.ui.doctor
 import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -19,6 +20,7 @@ import com.example.hospitalbedmanager.R
 import com.example.hospitalbedmanager.databinding.FragmentDoctorBinding
 import com.example.hospitalbedmanager.dataclasses.Bed
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -30,6 +32,8 @@ class DoctorFragment : Fragment() {
     private lateinit var totalBedAdapter: TotalBedAdapter
     private val bedList = mutableListOf<Bed>()
     private val db = FirebaseFirestore.getInstance()
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var fetchBedsRunnable: Runnable
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,14 +48,9 @@ class DoctorFragment : Fragment() {
         activity.showFab()
 
         setupRecyclerView()
-        fetchBeds()
+        startFetchingBeds()
 
         return root
-    }
-
-    override fun onResume() {
-        fetchBeds()
-        super.onResume()
     }
 
     private fun setupRecyclerView() {
@@ -75,10 +74,25 @@ class DoctorFragment : Fragment() {
                 }
                 bedList.sortBy { it.number }
                 totalBedAdapter.notifyDataSetChanged()
+                println(bedList)
             }
             .addOnFailureListener { exception ->
                 Toast.makeText(context, "Error al obtener camas: ${exception.message}", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun startFetchingBeds() {
+        fetchBedsRunnable = object : Runnable {
+            override fun run() {
+                fetchBeds()
+                handler.postDelayed(this, 2000) // 2000 ms = 2 seconds
+            }
+        }
+        handler.post(fetchBedsRunnable)
+    }
+
+    private fun stopFetchingBeds() {
+        handler.removeCallbacks(fetchBedsRunnable)
     }
 
     private fun showDeleteDialog(bed: Bed) {
@@ -88,7 +102,6 @@ class DoctorFragment : Fragment() {
         builder.setView(dialogView)
             .setTitle("Eliminar Cama Num ${bed.number}")
             .setPositiveButton("Eliminar") { _, _ ->
-
                 deleteBed(bed.number)
             }
             .setNegativeButton("Cancelar", null)
@@ -97,37 +110,42 @@ class DoctorFragment : Fragment() {
     }
 
     private fun deleteBed(bedNumber: Int) {
-        db.collection("beds")
+        val bedQuery = db.collection("beds")
             .whereEqualTo("number", bedNumber)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    Toast.makeText(context, "Cama no encontrada", Toast.LENGTH_SHORT).show()
-                    return@addOnSuccessListener
-                }
+            .limit(1)
 
-                // Asumiendo que solo hay un documento con este número de cama
-                val bedDoc = documents.documents[0]
-                val bedRef = bedDoc.reference
+        bedQuery.get().addOnSuccessListener { bedSnapshot ->
+            if (bedSnapshot.isEmpty) {
+                Toast.makeText(context, "Cama no encontrada", Toast.LENGTH_SHORT).show()
+                return@addOnSuccessListener
+            }
 
-                bedRef.delete()
-                .addOnSuccessListener {
-                    Toast.makeText(context, "Cama eliminada exitosamente", Toast.LENGTH_SHORT).show()
-                    // Elimina la cama de la lista local
-                    bedList.removeIf { it.number == bedNumber }
-                    totalBedAdapter.notifyDataSetChanged()
-                }.addOnFailureListener { exception ->
+            val bedDoc = bedSnapshot.documents[0]
+            val bedRef = bedDoc.reference
+
+            db.runTransaction { transaction ->
+                // Eliminar la cama
+                transaction.delete(bedRef)
+
+                null
+            }.addOnSuccessListener {
+                Toast.makeText(context, "Cama eliminada exitosamente", Toast.LENGTH_SHORT).show()
+            }.addOnFailureListener { exception ->
+                if (exception is FirebaseFirestoreException && exception.code == FirebaseFirestoreException.Code.ABORTED) {
+                    Toast.makeText(context, exception.message, Toast.LENGTH_SHORT).show()
+                } else {
                     Toast.makeText(context, "Error al eliminar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
                 }
             }
-            .addOnFailureListener { exception ->
-                Toast.makeText(context, "Error al buscar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
-            }
+        }.addOnFailureListener { exception ->
+            Toast.makeText(context, "Error al buscar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
+        }
+        fetchBeds()
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
+        stopFetchingBeds()
         _binding = null
     }
 

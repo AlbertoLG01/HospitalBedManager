@@ -3,6 +3,8 @@ package com.example.hospitalbedmanager.ui.porter
 import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +18,9 @@ import com.example.hospitalbedmanager.MainActivity
 import com.example.hospitalbedmanager.R
 import com.example.hospitalbedmanager.databinding.FragmentPorterBinding
 import com.example.hospitalbedmanager.dataclasses.Bed
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -28,6 +32,8 @@ class PorterFragment : Fragment() {
     private lateinit var occupiedBedAdapter: OccupiedBedAdapter
     private val bedList = mutableListOf<Bed>()
     private val db = FirebaseFirestore.getInstance()
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var fetchBedsRunnable: Runnable
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,7 +48,7 @@ class PorterFragment : Fragment() {
         activity.hideFab()
 
         setupRecyclerView()
-        fetchBeds()
+        startFetchingBeds()
 
         return root
     }
@@ -75,6 +81,20 @@ class PorterFragment : Fragment() {
             }
     }
 
+    private fun startFetchingBeds() {
+        fetchBedsRunnable = object : Runnable {
+            override fun run() {
+                fetchBeds()
+                handler.postDelayed(this, 2000) // 2000 ms = 2 segundos
+            }
+        }
+        handler.post(fetchBedsRunnable)
+    }
+
+    private fun stopFetchingBeds() {
+        handler.removeCallbacks(fetchBedsRunnable)
+    }
+
     private fun showUnassignDialog(bed: Bed) {
         val builder = AlertDialog.Builder(requireContext())
         val dialogView = layoutInflater.inflate(R.layout.dialog_unassign_bed, null)
@@ -90,40 +110,52 @@ class PorterFragment : Fragment() {
     }
 
     private fun unassignBed(bedNumber: Int) {
-        db.collection("beds")
+        val bedQuery = db.collection("beds")
             .whereEqualTo("number", bedNumber)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    Toast.makeText(context, "Cama no encontrada", Toast.LENGTH_SHORT).show()
-                    return@addOnSuccessListener
+            .limit(1)
+
+        bedQuery.get().addOnSuccessListener { bedSnapshot ->
+            if (bedSnapshot.isEmpty) {
+                Toast.makeText(context, "Cama no encontrada", Toast.LENGTH_SHORT).show()
+                return@addOnSuccessListener
+            }
+
+            val bedDoc = bedSnapshot.documents[0]
+            val bedRef = bedDoc.reference
+
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(bedRef)
+
+                // Verificar si la cama ya está ocupada
+                if (snapshot.getBoolean("occupied") == false) {
+                    throw FirebaseFirestoreException("Cama ya está liberada", FirebaseFirestoreException.Code.ABORTED)
                 }
 
-                // Asumiendo que solo hay un documento con este número de cama
-                val bedDoc = documents.documents[0]
-                val bedRef = bedDoc.reference
+                // Actualizar la cama
+                transaction.update(bedRef, mapOf(
+                    "occupied" to false
+                ))
 
-                bedRef.update(
-                    mapOf(
-                        "occupied" to false,
-                    )
-                ).addOnSuccessListener {
-                    Toast.makeText(context, "Cama liberada exitosamente", Toast.LENGTH_SHORT).show()
-                    // Elimina la cama de la lista local
-                    bedList.removeIf { it.number == bedNumber }
-                    occupiedBedAdapter.notifyDataSetChanged()
-                }.addOnFailureListener { exception ->
-                    Toast.makeText(context, "Error al desasignar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
+                null
+            }.addOnSuccessListener {
+                Toast.makeText(context, "Cama liberada exitosamente", Toast.LENGTH_SHORT).show()
+            }.addOnFailureListener { exception ->
+                if (exception is FirebaseFirestoreException && exception.code == FirebaseFirestoreException.Code.ABORTED) {
+                    Toast.makeText(context, exception.message, Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Error al liberar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
                 }
             }
-            .addOnFailureListener { exception ->
-                Toast.makeText(context, "Error al buscar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
-            }
+        }.addOnFailureListener { exception ->
+            Toast.makeText(context, "Error al buscar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
+        }
+
+        fetchBeds()
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
+        stopFetchingBeds()
         _binding = null
     }
 

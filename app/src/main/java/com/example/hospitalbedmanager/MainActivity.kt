@@ -62,10 +62,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showFab() {
-        fab?.show()
+        if(fab != null) {
+            fab?.show()
+        }
     }
 
     fun hideFab() {
-        fab?.hide()
+        if(fab != null) {
+            fab?.hide()
+        }
     }
 }
