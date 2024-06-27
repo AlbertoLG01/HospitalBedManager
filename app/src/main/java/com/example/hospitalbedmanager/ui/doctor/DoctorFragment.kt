@@ -49,6 +49,11 @@ class DoctorFragment : Fragment() {
         return root
     }
 
+    override fun onResume() {
+        fetchBeds()
+        super.onResume()
+    }
+
     private fun setupRecyclerView() {
         totalBedAdapter = TotalBedAdapter(requireContext(), bedList) { bed ->
             showDeleteDialog(bed)

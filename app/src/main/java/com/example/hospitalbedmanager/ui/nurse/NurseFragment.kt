@@ -19,6 +19,8 @@ import com.example.hospitalbedmanager.databinding.FragmentNurseBinding
 import com.example.hospitalbedmanager.dataclasses.Bed
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.Transaction
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -101,40 +103,51 @@ class NurseFragment : Fragment() {
     }
 
     private fun assignBed(bedNumber: Int, patientName: String, consultationNumber: Int) {
-        db.collection("beds")
+        val bedQuery = db.collection("beds")
             .whereEqualTo("number", bedNumber)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    Toast.makeText(context, "Cama no encontrada", Toast.LENGTH_SHORT).show()
-                    return@addOnSuccessListener
+            .limit(1)
+
+        bedQuery.get().addOnSuccessListener { bedSnapshot ->
+            if (bedSnapshot.isEmpty) {
+                Toast.makeText(context, "Cama no encontrada", Toast.LENGTH_SHORT).show()
+                return@addOnSuccessListener
+            }
+
+            val bedDoc = bedSnapshot.documents[0]
+            val bedRef = bedDoc.reference
+
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(bedRef)
+
+                // Verificar si la cama ya está ocupada
+                if (snapshot.getBoolean("occupied") == true) {
+                    throw FirebaseFirestoreException("Cama ya está ocupada", FirebaseFirestoreException.Code.ABORTED)
                 }
 
-                // Asumiendo que solo hay un documento con este número de cama
-                val bedDoc = documents.documents[0]
-                val bedRef = bedDoc.reference
+                // Actualizar la cama
+                transaction.update(bedRef, mapOf(
+                    "patientAssociated" to patientName,
+                    "consultationAssociated" to consultationNumber,
+                    "occupied" to true,
+                    "assignmentDate" to Timestamp.now()
+                ))
 
-                bedRef.update(
-                    mapOf(
-                        "patientAssociated" to patientName,
-                        "consultationAssociated" to consultationNumber,
-                        "occupied" to true,
-                        "assignmentDate" to Timestamp.now()
-                    )
-                ).addOnSuccessListener {
-                    Toast.makeText(context, "Cama asignada exitosamente", Toast.LENGTH_SHORT).show()
-                    // Elimina la cama de la lista local
-                    bedList.removeIf { it.number == bedNumber }
-                    freeBedAdapter.notifyDataSetChanged()
-                }.addOnFailureListener { exception ->
+                null
+            }.addOnSuccessListener {
+                Toast.makeText(context, "Cama asignada exitosamente", Toast.LENGTH_SHORT).show()
+            }.addOnFailureListener { exception ->
+                if (exception is FirebaseFirestoreException && exception.code == FirebaseFirestoreException.Code.ABORTED) {
+                    Toast.makeText(context, exception.message, Toast.LENGTH_SHORT).show()
+                } else {
                     Toast.makeText(context, "Error al asignar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
                 }
             }
-            .addOnFailureListener { exception ->
-                Toast.makeText(context, "Error al buscar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
+        }.addOnFailureListener { exception ->
+            Toast.makeText(context, "Error al buscar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
+        }
 
+        fetchBeds()
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -161,11 +174,10 @@ class NurseFragment : Fragment() {
             val formattedDate = sdf.format(assignmentDate)
             holder.lastAssignment.text = "Última Asignación: $formattedDate"
 
-            if(bed.consultationAssociated != -1) {
+            if (bed.consultationAssociated != -1) {
                 holder.consultationNumber.text =
                     "Número de última consulta asociada: ${bed.consultationAssociated}"
-            }
-            else{
+            } else {
                 holder.consultationNumber.text =
                     "Número de última consulta asociada: No hay registro"
             }
@@ -186,6 +198,4 @@ class NurseFragment : Fragment() {
             val assignButton: Button = itemView.findViewById(R.id.button_assign)
         }
     }
-
 }
-
