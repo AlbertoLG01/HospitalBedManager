@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.hospitalbedmanager.MainActivity
 import com.example.hospitalbedmanager.R
 import com.example.hospitalbedmanager.databinding.FragmentDoctorBinding
 import com.example.hospitalbedmanager.dataclasses.Bed
@@ -38,6 +39,10 @@ class DoctorFragment : Fragment() {
         _binding = FragmentDoctorBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        val activity = requireActivity() as MainActivity
+
+        activity.showFab()
+
         setupRecyclerView()
         fetchBeds()
 
@@ -61,10 +66,9 @@ class DoctorFragment : Fragment() {
             .addOnSuccessListener { documents ->
                 for (document in documents) {
                     var bed = document.toObject(Bed::class.java)
-                    bed.isOccupied = document.get("isOccupied") as Boolean
                     bedList.add(bed)
-                    println(bed)
                 }
+                bedList.sortBy { it.number }
                 totalBedAdapter.notifyDataSetChanged()
             }
             .addOnFailureListener { exception ->
@@ -142,7 +146,7 @@ class DoctorFragment : Fragment() {
             val formattedDate = sdf.format(assignmentDate)
             holder.lastAssignment.text = "Última Asignación: $formattedDate"
 
-            if(bed.isOccupied) {
+            if(bed.occupied) {
                 holder.isBedOccupied.text =
                     "Cama Ocupada"
                 holder.isBedOccupied.setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark))

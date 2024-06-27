@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.hospitalbedmanager.MainActivity
 import com.example.hospitalbedmanager.R
 import com.example.hospitalbedmanager.databinding.FragmentNurseBinding
 import com.example.hospitalbedmanager.dataclasses.Bed
@@ -38,6 +39,10 @@ class NurseFragment : Fragment() {
         _binding = FragmentNurseBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        val activity = requireActivity() as MainActivity
+
+        activity.hideFab()
+
         setupRecyclerView()
         fetchBeds()
 
@@ -57,13 +62,14 @@ class NurseFragment : Fragment() {
     private fun fetchBeds() {
         bedList.clear()
         db.collection("beds")
-            .whereEqualTo("isOccupied", false)
+            .whereEqualTo("occupied", false)
             .get()
             .addOnSuccessListener { documents ->
                 for (document in documents) {
                     val bed = document.toObject(Bed::class.java)
                     bedList.add(bed)
                 }
+                bedList.sortBy { it.number }
                 freeBedAdapter.notifyDataSetChanged()
             }
             .addOnFailureListener { exception ->
@@ -112,7 +118,7 @@ class NurseFragment : Fragment() {
                     mapOf(
                         "patientAssociated" to patientName,
                         "consultationAssociated" to consultationNumber,
-                        "isOccupied" to true,
+                        "occupied" to true,
                         "assignmentDate" to Timestamp.now()
                     )
                 ).addOnSuccessListener {

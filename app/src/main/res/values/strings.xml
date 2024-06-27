@@ -2,8 +2,8 @@
     <string name="app_name">Hospital Bed Manager</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_title">Hospital Bed Manager</string>
+    <string name="nav_header_subtitle">Welcome !</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Ajustes</string>
 
@@ -25,4 +25,5 @@
     <string name="desasignar_cama">¿Está seguro de que desea desasignar esta cama?</string>
     <string name="camas_totales">Camas Totales</string>
     <string name="delete_cama">¿Estás seguro de que deseas eliminar esta cama?</string>
+    <string name="title_activity_add_bed">AddBedActivity</string>
 </resources>

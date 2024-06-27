@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.hospitalbedmanager.MainActivity
 import com.example.hospitalbedmanager.R
 import com.example.hospitalbedmanager.databinding.FragmentPorterBinding
 import com.example.hospitalbedmanager.dataclasses.Bed
@@ -36,6 +37,10 @@ class PorterFragment : Fragment() {
         _binding = FragmentPorterBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        val activity = requireActivity() as MainActivity
+
+        activity.hideFab()
+
         setupRecyclerView()
         fetchBeds()
 
@@ -55,13 +60,14 @@ class PorterFragment : Fragment() {
     private fun fetchBeds() {
         bedList.clear()
         db.collection("beds")
-            .whereEqualTo("isOccupied", true)
+            .whereEqualTo("occupied", true)
             .get()
             .addOnSuccessListener { documents ->
                 for (document in documents) {
                     val bed = document.toObject(Bed::class.java)
                     bedList.add(bed)
                 }
+                bedList.sortBy { it.number }
                 occupiedBedAdapter.notifyDataSetChanged()
             }
             .addOnFailureListener { exception ->
@@ -99,7 +105,7 @@ class PorterFragment : Fragment() {
 
                 bedRef.update(
                     mapOf(
-                        "isOccupied" to false,
+                        "occupied" to false,
                     )
                 ).addOnSuccessListener {
                     Toast.makeText(context, "Cama liberada exitosamente", Toast.LENGTH_SHORT).show()
