@@ -150,7 +150,7 @@ class PorterFragment : Fragment() {
             Toast.makeText(context, "Error al buscar cama: ${exception.message}", Toast.LENGTH_SHORT).show()
         }
 
-        fetchBeds()
+        //fetchBeds()
     }
 
     override fun onDestroyView() {
